@@ -907,4 +907,17 @@
     <string name="category_filter_all">All</string>
     <string name="category_filter_none">None</string>
     <string name="category_filter_uncategorized">Without category</string>
+    <!-- Category colors backup -->
+    <string name="preferences_category_colors_backup">Backup</string>
+    <string name="preferences_category_colors_export">Export colors</string>
+    <string name="preferences_category_colors_export_summary">Save the category colors to a JSON file</string>
+    <string name="preferences_category_colors_export_done">Category colors exported</string>
+    <string name="preferences_category_colors_export_failed">Export failed</string>
+    <string name="preferences_category_colors_import">Import colors</string>
+    <string name="preferences_category_colors_import_summary">Load category colors from a JSON file</string>
+    <string name="preferences_category_colors_import_failed">Import failed: invalid file</string>
+    <plurals name="preferences_category_colors_import_done">
+        <item quantity="one">%d category color imported</item>
+        <item quantity="other">%d category colors imported</item>
+    </plurals>
 </resources>

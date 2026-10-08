@@ -15,10 +15,13 @@
 
 package com.android.calendar.settings
 
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
@@ -27,6 +30,10 @@ import com.android.calendar.Utils
 import com.android.calendar.categories.CategoryColors
 import com.android.calendar.categories.EventCategories
 import ws.xsoh.etar.R
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * Settings screen of the category colors : enables the feature, sets the color of
@@ -37,6 +44,14 @@ class CategoryColorsPreferences : PreferenceFragmentCompat() {
 
     private lateinit var noCategoryPref: ColorSwatchPreference
     private lateinit var categoriesGroup: PreferenceCategory
+
+    private val exportLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri -> uri?.let { exportTo(it) } }
+
+    private val importLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri -> uri?.let { importFrom(it) } }
     private val mainHandler = Handler(Looper.getMainLooper())
     @Volatile
     private var loadGeneration = 0
@@ -85,10 +100,36 @@ class CategoryColorsPreferences : PreferenceFragmentCompat() {
             setTitle(R.string.preferences_category_colors_list)
         }
 
+        val backupGroup = PreferenceCategory(context).apply {
+            key = "pref_category_colors_backup"
+            setTitle(R.string.preferences_category_colors_backup)
+        }
+
         screen.addPreference(enabledPref)
         screen.addPreference(detailsHeaderPref)
         screen.addPreference(noCategoryPref)
         screen.addPreference(categoriesGroup)
+        screen.addPreference(backupGroup)
+        backupGroup.addPreference(Preference(context).apply {
+            key = "pref_category_colors_export"
+            isPersistent = false
+            setTitle(R.string.preferences_category_colors_export)
+            setSummary(R.string.preferences_category_colors_export_summary)
+            setOnPreferenceClickListener {
+                exportLauncher.launch(exportFileName())
+                true
+            }
+        })
+        backupGroup.addPreference(Preference(context).apply {
+            key = "pref_category_colors_import"
+            isPersistent = false
+            setTitle(R.string.preferences_category_colors_import)
+            setSummary(R.string.preferences_category_colors_import_summary)
+            setOnPreferenceClickListener {
+                importLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
+                true
+            }
+        })
         preferenceScreen = screen
         // Dependencies are resolved through the PreferenceManager : the screen must be set first.
         detailsHeaderPref.dependency = CategoryColors.KEY_ENABLED
@@ -246,7 +287,50 @@ class CategoryColorsPreferences : PreferenceFragmentCompat() {
         refresh()
     }
 
+    /**
+     * Adds a timestamp to the filename so that it auto-sort alphabetically in a file manager
+     * ie. "2026-09-23_14h09_etar-category-colors.json"
+     * */
+    private fun exportFileName(): String =
+        SimpleDateFormat("yyyy-MM-dd_HH'h'mm", Locale.ROOT).format(Date()) + "_" + EXPORT_FILE_NAME
+
+    private fun exportTo(uri: Uri) {
+        val context = requireContext()
+        try {
+            context.contentResolver.openOutputStream(uri, "wt")?.use { stream ->
+                stream.write(CategoryColors.exportToJson(context).toByteArray(Charsets.UTF_8))
+            } ?: throw IOException("No output stream")
+            Toast.makeText(context, R.string.preferences_category_colors_export_done,
+                Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Log.w(TAG, "Export failed", e)
+            Toast.makeText(context, R.string.preferences_category_colors_export_failed,
+                Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun importFrom(uri: Uri) {
+        val context = requireContext()
+        try {
+            val json = context.contentResolver.openInputStream(uri)?.use { stream ->
+                stream.readBytes().toString(Charsets.UTF_8)
+            } ?: throw IOException("No input stream")
+            val count = CategoryColors.importFromJson(context, json)
+            Toast.makeText(context, resources.getQuantityString(
+                R.plurals.preferences_category_colors_import_done, count, count),
+                Toast.LENGTH_SHORT).show()
+            Utils.sendUpdateWidgetIntent(context)
+            refresh()
+        } catch (e: Exception) {
+            Log.w(TAG, "Import failed", e)
+            Toast.makeText(context, R.string.preferences_category_colors_import_failed,
+                Toast.LENGTH_LONG).show()
+        }
+    }
+
     companion object {
+        private const val TAG = "CategoryColorsPrefs"
+        private const val EXPORT_FILE_NAME = "etar-category-colors.json"
         private const val DIALOG_TAG = "category_color_dialog"
         private const val NAME_DIALOG_TAG = "category_name_dialog"
         private const val STATE_PENDING_NEW_CATEGORY = "pending_new_category"

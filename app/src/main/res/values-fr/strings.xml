@@ -427,4 +427,18 @@
     <string name="category_filter_all">Toutes</string>
     <string name="category_filter_none">Aucune</string>
     <string name="category_filter_uncategorized">Sans catégorie</string>
+    <!-- Category colors backup -->
+    <string name="preferences_category_colors_backup">Sauvegarde</string>
+    <string name="preferences_category_colors_export">Exporter les couleurs</string>
+    <string name="preferences_category_colors_export_summary">Enregistrer les couleurs des catégories dans un fichier JSON</string>
+    <string name="preferences_category_colors_export_done">Couleurs des catégories exportées</string>
+    <string name="preferences_category_colors_export_failed">Échec de l’export</string>
+    <string name="preferences_category_colors_import">Importer des couleurs</string>
+    <string name="preferences_category_colors_import_summary">Charger les couleurs des catégories depuis un fichier JSON</string>
+    <string name="preferences_category_colors_import_failed">Échec de l’import : fichier invalide</string>
+    <plurals name="preferences_category_colors_import_done">
+        <item quantity="one">%d couleur de catégorie importée</item>
+        <item quantity="many">%d couleurs de catégories importées</item>
+        <item quantity="other">%d couleurs de catégories importées</item>
+    </plurals>
 </resources>

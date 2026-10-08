@@ -23,6 +23,7 @@ import com.android.calendar.categories.EventCategories.normalize
 import com.android.calendar.settings.GeneralPreferences
 import org.json.JSONException
 import org.json.JSONObject
+import java.util.Locale
 
 /**
  * Colors events according to their iCalendar CATEGORIES (cf. issue #491).
@@ -248,6 +249,95 @@ object CategoryColors {
         EventCategories.sortedUnique(DEFAULT_CATEGORY_COLORS.keys +
                 getConfiguredColors(context).keys +
                 EventCategories.getEventCategories(context).values.flatten())
+
+    // ------------------------------------------------------------------------------------------
+    // Import and export of the category colors and hidden from suggestions.
+    // The colors only exist on the device, since they are not part of the iCalendar RFC.
+    // Since many categories can exist, having to set them up manually on each device can be a pain,
+    // hence Etar allows to export the current category settings, and import them in another instance.
+    // ------------------------------------------------------------------------------------------
+
+    private const val JSON_VERSION = "version"
+    private const val JSON_NO_CATEGORY_COLOR = "noCategoryColor"
+    private const val JSON_CATEGORIES = "categories"
+    private const val JSON_HIDDEN_SUGGESTIONS = "hiddenFromSuggestions"
+
+    private fun toHex(color: Int) = String.format(Locale.ROOT, "#%06X", color and 0xFFFFFF)
+
+    private fun parseHex(value: String): Int? {
+        val hex = value.trim().removePrefix("#")
+        if (hex.length != 6) return null
+        return hex.toIntOrNull(16)?.let { it or 0xFF000000.toInt() }
+    }
+
+    /**
+     * Full backup as JSON : the effective color of every known category (custom or factory),
+     * the "no category" color and the categories hidden from the suggestions.
+     */
+    @JvmStatic
+    fun exportToJson(context: Context): String {
+        val root = JSONObject()
+        root.put(JSON_VERSION, 2)
+        root.put(JSON_NO_CATEGORY_COLOR, toHex(getNoCategoryColor(context)))
+        val known = getAllKnownCategories(context)
+        val categories = JSONObject()
+        for (category in known) {
+            getCategoryColor(context, category)?.let { categories.put(category, toHex(it)) }
+        }
+        root.put(JSON_CATEGORIES, categories)
+        val hidden = org.json.JSONArray()
+        known.filter { isHiddenFromSuggestions(context, it) }
+            .forEach { hidden.put(it) }
+        root.put(JSON_HIDDEN_SUGGESTIONS, hidden)
+        return root.toString(2)
+    }
+
+    /**
+     * Restores a backup made by [exportToJson] : every category of the file gets back its
+     * exported color (stored as a custom color only when it differs from the factory one) and
+     * its "hidden from suggestions" state. Categories absent from the file are left untouched.
+     * Returns the number of restored categories.
+     *
+     * @throws JSONException if the content is not a valid export
+     */
+    @JvmStatic
+    fun importFromJson(context: Context, json: String): Int {
+        val root = JSONObject(json)
+        val categories = root.getJSONObject(JSON_CATEGORIES)
+        val hiddenInFile = HashSet<String>()
+        root.optJSONArray(JSON_HIDDEN_SUGGESTIONS)?.let { array ->
+            for (i in 0 until array.length()) {
+                EventCategories.sanitizeCategoryName(array.optString(i))?.let { hiddenInFile.add(normalize(it)) }
+            }
+        }
+
+        val colors = getConfiguredColors(context).toMutableMap()
+        val hidden = hiddenSuggestions(context).toMutableSet()
+        var count = 0
+        val names = categories.keys()
+        while (names.hasNext()) {
+            val name = names.next()
+            val color = parseHex(categories.getString(name)) ?: continue
+            val clean = EventCategories.sanitizeCategoryName(name) ?: continue
+            val key = normalize(clean)
+            colors.keys.filter { normalize(it) == key }.forEach { colors.remove(it) }
+            if (defaultColorsByKey[key] != color) {
+                colors[clean] = color
+            }
+            if (key in hiddenInFile) hidden.add(key) else hidden.remove(key)
+            count++
+        }
+        // Categories only listed as hidden (no color in the file) are hidden as well
+        hidden.addAll(hiddenInFile)
+        saveConfiguredColors(context, colors)
+        prefs(context).edit().putStringSet(KEY_HIDDEN_SUGGESTIONS, hidden).apply()
+
+        parseHex(root.optString(JSON_NO_CATEGORY_COLOR, ""))?.let { color ->
+            if (color == DEFAULT_NO_CATEGORY_COLOR) clearNoCategoryColor(context)
+            else setNoCategoryColor(context, color)
+        }
+        return count
+    }
 
     // ------------------------------------------------------------------------------------------
     // Color resolution
