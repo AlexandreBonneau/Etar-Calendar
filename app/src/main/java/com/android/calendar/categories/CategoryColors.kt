@@ -46,6 +46,44 @@ object CategoryColors {
     /** Default "no category" color (light green #97eb79). */
     const val DEFAULT_NO_CATEGORY_COLOR = 0xFF97EB79.toInt()
 
+    /**
+     * Categories offered by default, with their factory color. A color chosen by the user
+     * always takes precedence. Matching is case-insensitive, but names must otherwise match
+     * the CATEGORIES values stored on the server.
+     * Note : You can replace `linkedMapOf()` with `emptyMap()` to offer no default categories.
+     */
+    private val DEFAULT_CATEGORY_COLORS: Map<String, Int> = linkedMapOf(
+        "Administrative" to 0xFFCECE7A.toInt(),
+        "Appointment" to 0xFF99A3A5.toInt(),
+        "Birthday" to 0xFFF23BAF.toInt(),
+        "Business" to 0xFFEBB758.toInt(),
+        "Children" to 0xFFEFD828.toInt(),
+        "Dev" to 0xFF6917B5.toInt(),
+        "DIY" to 0xFF4C1FE0.toInt(),
+        "Errands" to 0xFFEBE3B0.toInt(),
+        "Friends" to 0xFFF983D8.toInt(),
+        "Going out" to 0xFF577F3E.toInt(),
+        "Housework" to 0xFFF49097.toInt(),
+        "Leisure" to 0xFFFFAAFF.toInt(),
+        "Meeting" to 0xFFCEEB6D.toInt(),
+        "Miscellaneous" to 0xFFD9D9D9.toInt(),
+        "Party" to 0xFFEBE935.toInt(),
+        "Personal" to 0xFF90498E.toInt(),
+        "Phone call" to 0xFFA8C4BE.toInt(),
+        "Project" to 0xFF007D79.toInt(),
+        "Restaurant" to 0xFF508263.toInt(),
+        "School" to 0xFF007DAF.toInt(),
+        "Special occasion" to 0xFFAEDF45.toInt(),
+        "Sports" to 0xFFB3C6EB.toInt(),
+        "Travel" to 0xFF60EBC4.toInt(),
+        "Vacation" to 0xFF42AFE5.toInt(),
+        "Work" to 0xFFA8D4FD.toInt(),
+    )
+
+    private val defaultColorsByKey: Map<String, Int> by lazy {
+        DEFAULT_CATEGORY_COLORS.mapKeys { normalize(it.key) }
+    }
+
     // --- Cache: configured colors, key = lower-cased category name ---------------------------
 
     @Volatile
@@ -146,10 +184,10 @@ object CategoryColors {
         return cache[normalize(category)]
     }
 
-    /** Effective color of the category : the color chosen by the user, else null */
+    /** Effective color of the category : the color chosen by the user, else the factory color, else null */
     @JvmStatic
     fun getCategoryColor(context: Context, category: String): Int? =
-        getUserCategoryColor(context, category)
+        getUserCategoryColor(context, category) ?: defaultColorsByKey[normalize(category)]
 
     /** True when the user has chosen a color for this category */
     @JvmStatic
@@ -161,13 +199,14 @@ object CategoryColors {
         getCategoryColor(context, category) ?: getNoCategoryColor(context)
 
     /**
-     * Every category to show in the settings: the configured ones and the ones found in the
-     * calendars (so a category that disappeared from the server keeps its configured color).
-     * Those are sorted alphabetically, case-insensitive, and one entry per category.
+     * Every category to show in the settings: the factory ones, the configured ones and the ones
+     * found in the calendars (so a category that disappeared from the server keeps its configured
+     * color). Those are sorted alphabetically, case-insensitive, and one entry per category.
      */
     @JvmStatic
     fun getAllKnownCategories(context: Context): List<String> =
-        EventCategories.sortedUnique(getConfiguredColors(context).keys +
+        EventCategories.sortedUnique(DEFAULT_CATEGORY_COLORS.keys +
+                getConfiguredColors(context).keys +
                 EventCategories.getEventCategories(context).values.flatten())
 
     // ------------------------------------------------------------------------------------------
