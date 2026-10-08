@@ -16,6 +16,7 @@
 
 package com.android.calendar.agenda;
 
+import android.text.TextUtils;
 import android.os.Message;
 import android.os.Looper;
 import android.app.Activity;
@@ -52,6 +53,9 @@ import com.android.calendar.StickyHeaderListView;
 import com.android.calendar.Utils;
 import com.android.calendar.calendarcommon2.Time;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Set;
 import java.util.Date;
 import java.util.Formatter;
 import java.util.Iterator;
@@ -1099,10 +1103,52 @@ public class AgendaWindowAdapter extends BaseAdapter
         }
 
         private void prepareCategoryQuery(WorkerArgs args, QuerySpec spec) {
-            if (!CategoryColors.needsCategories(mContext)) {
+            boolean search = spec.searchQuery != null;
+            if (!search && !CategoryColors.needsCategories(mContext)) {
                 return;
             }
             EventCategories.refresh(mContext);
+
+            if (search) {
+                // The provider applies the search terms in a HAVING clause that can't be OR-ed
+                // with our selection : when some categories match, search ourselves in the title,
+                // description and location, or in the categories.
+                Set<Long> ids = EventCategories.findEventIdsByCategory(mContext, spec.searchQuery);
+                if (ids.isEmpty()) {
+                    return;
+                }
+                ArrayList<String> searchArgs = new ArrayList<>();
+                StringBuilder where = new StringBuilder("(")
+                        .append(Instances.EVENT_ID).append(" IN (")
+                        .append(TextUtils.join(",", ids)).append(")");
+                String[] tokens = spec.searchQuery.trim().split("\\s+");
+                if (tokens.length > 0 && !tokens[0].isEmpty()) {
+                    where.append(" OR (");
+                    for (int i = 0; i < tokens.length; i++) {
+                        if (i > 0) {
+                            where.append(" AND ");
+                        }
+                        where.append("(").append(Instances.TITLE).append(" LIKE ? ESCAPE '\\' OR ")
+                                .append(Instances.DESCRIPTION).append(" LIKE ? ESCAPE '\\' OR ")
+                                .append(Instances.EVENT_LOCATION).append(" LIKE ? ESCAPE '\\')");
+                        String like = "%" + tokens[i].replace("\\", "\\\\")
+                                .replace("%", "\\%").replace("_", "\\_") + "%";
+                        searchArgs.add(like);
+                        searchArgs.add(like);
+                        searchArgs.add(like);
+                    }
+                    where.append(")");
+                }
+                where.append(")");
+                args.uri = buildQueryUri(spec.start, spec.end, null);
+                args.selection = "(" + args.selection + ") AND " + where;
+                if (args.selectionArgs != null) {
+                    searchArgs.addAll(0, Arrays.asList(args.selectionArgs));
+                }
+                args.selectionArgs = searchArgs.toArray(new String[0]);
+                // Note : The category filter doesn't apply to the search since it must find everything
+                return;
+            }
 
             String filter = CategoryFilter.buildSelection(mContext, Instances.EVENT_ID);
             if (filter != null) {

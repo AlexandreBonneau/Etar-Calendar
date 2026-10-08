@@ -195,4 +195,17 @@ object EventCategories {
     @JvmStatic
     fun getUsedCategoryKeys(context: Context): Set<String> =
         getEventCategories(context).values.flatten().map { normalize(it) }.toSet()
+
+    /**
+     * Ids of the events having a category whose name contains [query] (case-insensitive).
+     * This is used by the search.
+     */
+    @JvmStatic
+    fun findEventIdsByCategory(context: Context, query: String?): Set<Long> {
+        val needle = query?.let { normalize(it) }
+        if (needle.isNullOrEmpty()) return emptySet()
+        return getEventCategories(context)
+            .filterValues { categories -> categories.any { normalize(it).contains(needle) } }
+            .keys
+    }
 }
