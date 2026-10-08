@@ -408,4 +408,8 @@
     <!-- Category color in event details -->
     <string name="preferences_category_colors_details_header">Couleur de catégorie dans le détail</string>
     <string name="preferences_category_colors_details_header_summary">Utiliser la couleur de la première catégorie au lieu de celle de l’agenda dans l’en-tête d’un évènement</string>
+    <!-- Add a category from the settings -->
+    <string name="preferences_category_colors_add">Ajouter une catégorie</string>
+    <string name="category_name_dialog_title">Nouvelle catégorie</string>
+    <string name="category_name_dialog_hint">Nom de la catégorie</string>
 </resources>

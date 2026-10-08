@@ -888,4 +888,8 @@
     <!-- Category color in event details -->
     <string name="preferences_category_colors_details_header">Category color in event details</string>
     <string name="preferences_category_colors_details_header_summary">Use the color of the first category instead of the calendar color in the header of an event</string>
+    <!-- Add a category from the settings -->
+    <string name="preferences_category_colors_add">Add a category</string>
+    <string name="category_name_dialog_title">New category</string>
+    <string name="category_name_dialog_hint">Category name</string>
 </resources>

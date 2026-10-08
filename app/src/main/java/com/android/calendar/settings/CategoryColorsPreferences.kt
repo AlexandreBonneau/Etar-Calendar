@@ -24,6 +24,7 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
 import com.android.calendar.Utils
 import com.android.calendar.categories.CategoryColors
+import com.android.calendar.categories.EventCategories
 import ws.xsoh.etar.R
 
 /**
@@ -39,7 +40,11 @@ class CategoryColorsPreferences : PreferenceFragmentCompat() {
     @Volatile
     private var loadGeneration = 0
 
+    /** Category being added with "Add a category" needs to be saved even if the default color is not changed */
+    private var pendingNewCategory: String? = null
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        pendingNewCategory = savedInstanceState?.getString(STATE_PENDING_NEW_CATEGORY)
         preferenceManager.sharedPreferencesName = GeneralPreferences.SHARED_PREFS_NAME
         val context = preferenceManager.context
         val screen = preferenceManager.createPreferenceScreen(context)
@@ -92,6 +97,9 @@ class CategoryColorsPreferences : PreferenceFragmentCompat() {
         childFragmentManager.setFragmentResultListener(
             CategoryColorDialog.REQUEST_KEY, this
         ) { _, result -> onColorChosen(result) }
+        childFragmentManager.setFragmentResultListener(
+            CategoryNameDialog.REQUEST_KEY, this
+        ) { _, result -> onNameChosen(result) }
     }
 
     override fun onResume() {
@@ -128,6 +136,18 @@ class CategoryColorsPreferences : PreferenceFragmentCompat() {
     private fun populate(categories: List<String>) {
         val context = requireContext()
         categoriesGroup.removeAll()
+        categoriesGroup.addPreference(Preference(preferenceManager.context).apply {
+            key = "pref_category_colors_add"
+            isPersistent = false
+            setIcon(R.drawable.ic_add)
+            setTitle(R.string.preferences_category_colors_add)
+            setOnPreferenceClickListener {
+                if (childFragmentManager.findFragmentByTag(NAME_DIALOG_TAG) == null) {
+                    CategoryNameDialog().show(childFragmentManager, NAME_DIALOG_TAG)
+                }
+                true
+            }
+        })
         if (categories.isEmpty()) {
             categoriesGroup.addPreference(messagePreference(R.string.preferences_category_colors_empty))
             return
@@ -165,6 +185,21 @@ class CategoryColorsPreferences : PreferenceFragmentCompat() {
             setSummary(messageRes)
         }
 
+    /** A new category was typed : ask for its color (existing ones keep their current color) */
+    private fun onNameChosen(result: Bundle) {
+        val context = requireContext()
+        val name = EventCategories.sanitizeCategoryName(
+            result.getString(CategoryNameDialog.RESULT_NAME)) ?: return
+        val color = CategoryColors.getBadgeColor(context, name)
+        pendingNewCategory = name
+        showColorDialog(name, color, CategoryColors.isCustomized(context, name))
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(STATE_PENDING_NEW_CATEGORY, pendingNewCategory)
+    }
+
     private fun showColorDialog(category: String?, color: Int, allowReset: Boolean) {
         if (childFragmentManager.findFragmentByTag(DIALOG_TAG) != null) return
         CategoryColorDialog.newInstance(category, color, allowReset)
@@ -177,12 +212,15 @@ class CategoryColorsPreferences : PreferenceFragmentCompat() {
         val reset = result.getBoolean(CategoryColorDialog.RESULT_RESET)
         val color = result.getInt(CategoryColorDialog.RESULT_COLOR)
         val colorChanged = result.getBoolean(CategoryColorDialog.RESULT_COLOR_CHANGED)
+        // A category added with "Add a category" only exists once its color is saved
+        val isNewCategory = category != null && category == pendingNewCategory
+        pendingNewCategory = null
         when {
             category == null && reset -> CategoryColors.clearNoCategoryColor(context)
             category == null -> CategoryColors.setNoCategoryColor(context, color)
             reset -> CategoryColors.clearCategoryColor(context, category)
             // Don't turn a factory color into a custom one when OK is pressed without a change
-            colorChanged || CategoryColors.isCustomized(context, category) ->
+            colorChanged || isNewCategory || CategoryColors.isCustomized(context, category) ->
                 CategoryColors.setCategoryColor(context, category, color)
         }
         Utils.sendUpdateWidgetIntent(context)
@@ -191,5 +229,7 @@ class CategoryColorsPreferences : PreferenceFragmentCompat() {
 
     companion object {
         private const val DIALOG_TAG = "category_color_dialog"
+        private const val NAME_DIALOG_TAG = "category_name_dialog"
+        private const val STATE_PENDING_NEW_CATEGORY = "pending_new_category"
     }
 }
