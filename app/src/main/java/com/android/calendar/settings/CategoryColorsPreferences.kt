@@ -18,6 +18,7 @@ package com.android.calendar.settings
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.widget.Toast
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
@@ -125,15 +126,16 @@ class CategoryColorsPreferences : PreferenceFragmentCompat() {
         val generation = ++loadGeneration
         Thread {
             val categories = CategoryColors.getAllKnownCategories(context)
+            val usedKeys = EventCategories.getUsedCategoryKeys(context)
             mainHandler.post {
                 if (generation == loadGeneration && isAdded) {
-                    populate(categories)
+                    populate(categories, usedKeys)
                 }
             }
         }.start()
     }
 
-    private fun populate(categories: List<String>) {
+    private fun populate(categories: List<String>, usedKeys: Set<String>) {
         val context = requireContext()
         categoriesGroup.removeAll()
         categoriesGroup.addPreference(Preference(preferenceManager.context).apply {
@@ -156,17 +158,20 @@ class CategoryColorsPreferences : PreferenceFragmentCompat() {
         for (category in categories) {
             val color = CategoryColors.getCategoryColor(context, category)
             val customized = CategoryColors.isCustomized(context, category)
+            val suggested = !CategoryColors.isHiddenFromSuggestions(context, category)
+            val deletable = CategoryColors.isDeletable(category, usedKeys)
             categoriesGroup.addPreference(ColorSwatchPreference(preferenceManager.context).apply {
                 key = "pref_category_color_item:$category"
                 title = category
                 swatchColor = color ?: noCategoryColor
-                summary = if (color == null) {
-                    getString(R.string.preferences_category_colors_not_set)
-                } else {
-                    null
-                }
+                summary = listOfNotNull(
+                    if (color == null) getString(R.string.preferences_category_colors_not_set) else null,
+                    if (!suggested) getString(R.string.preferences_category_colors_hidden) else null,
+                    if (deletable) getString(R.string.preferences_category_colors_unused) else null
+                ).joinToString(" · ").ifEmpty { null }
                 setOnPreferenceClickListener {
-                    showColorDialog(category, color ?: noCategoryColor, customized)
+                    showColorDialog(category, color ?: noCategoryColor, customized, suggested,
+                        deletable)
                     true
                 }
             })
@@ -200,9 +205,10 @@ class CategoryColorsPreferences : PreferenceFragmentCompat() {
         outState.putString(STATE_PENDING_NEW_CATEGORY, pendingNewCategory)
     }
 
-    private fun showColorDialog(category: String?, color: Int, allowReset: Boolean) {
+    private fun showColorDialog(category: String?, color: Int, allowReset: Boolean,
+                                suggested: Boolean = true, deletable: Boolean = false) {
         if (childFragmentManager.findFragmentByTag(DIALOG_TAG) != null) return
-        CategoryColorDialog.newInstance(category, color, allowReset)
+        CategoryColorDialog.newInstance(category, color, allowReset, suggested, deletable)
             .show(childFragmentManager, DIALOG_TAG)
     }
 
@@ -211,6 +217,15 @@ class CategoryColorsPreferences : PreferenceFragmentCompat() {
         val category = result.getString(CategoryColorDialog.RESULT_CATEGORY)
         val reset = result.getBoolean(CategoryColorDialog.RESULT_RESET)
         val color = result.getInt(CategoryColorDialog.RESULT_COLOR)
+        if (category != null && result.getBoolean(CategoryColorDialog.RESULT_DELETE)) {
+            CategoryColors.deleteCategory(context, category)
+            Toast.makeText(context,
+                getString(R.string.preferences_category_colors_deleted, category),
+                Toast.LENGTH_SHORT).show()
+            Utils.sendUpdateWidgetIntent(context)
+            refresh()
+            return
+        }
         val colorChanged = result.getBoolean(CategoryColorDialog.RESULT_COLOR_CHANGED)
         // A category added with "Add a category" only exists once its color is saved
         val isNewCategory = category != null && category == pendingNewCategory
@@ -222,6 +237,10 @@ class CategoryColorsPreferences : PreferenceFragmentCompat() {
             // Don't turn a factory color into a custom one when OK is pressed without a change
             colorChanged || isNewCategory || CategoryColors.isCustomized(context, category) ->
                 CategoryColors.setCategoryColor(context, category, color)
+        }
+        if (category != null) {
+            CategoryColors.setHiddenFromSuggestions(context, category,
+                !result.getBoolean(CategoryColorDialog.RESULT_SUGGESTED, true))
         }
         Utils.sendUpdateWidgetIntent(context)
         refresh()

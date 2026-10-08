@@ -51,5 +51,23 @@
                 android:maxLines="1"
                 android:typeface="monospace" />
         </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/category_suggested"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minHeight="48dp"
+            android:text="@string/category_color_dialog_suggested" />
+
+        <Button
+            android:id="@+id/category_delete"
+            style="?attr/borderlessButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:text="@string/category_color_dialog_delete"
+            android:textColor="?attr/colorError"
+            android:visibility="gone" />
     </LinearLayout>
 </ScrollView>

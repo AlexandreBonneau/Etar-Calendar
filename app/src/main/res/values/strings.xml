@@ -892,4 +892,12 @@
     <string name="preferences_category_colors_add">Add a category</string>
     <string name="category_name_dialog_title">New category</string>
     <string name="category_name_dialog_hint">Category name</string>
+    <!-- Category management -->
+    <string name="preferences_category_colors_hidden">Hidden from suggestions</string>
+    <string name="preferences_category_colors_unused">Not used</string>
+    <string name="preferences_category_colors_deleted">Category \"%s\" deleted</string>
+    <string name="category_color_dialog_delete">Delete the category</string>
+    <string name="category_delete_confirm_title">Delete \"%s\"?</string>
+    <string name="category_delete_confirm_message">No event uses this category. Its color and settings will be removed.</string>
+    <string name="category_color_dialog_suggested">Offer in the event editor suggestions</string>
 </resources>

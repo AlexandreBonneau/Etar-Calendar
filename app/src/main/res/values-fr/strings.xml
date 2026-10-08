@@ -412,4 +412,12 @@
     <string name="preferences_category_colors_add">Ajouter une catégorie</string>
     <string name="category_name_dialog_title">Nouvelle catégorie</string>
     <string name="category_name_dialog_hint">Nom de la catégorie</string>
+    <!-- Category management -->
+    <string name="preferences_category_colors_hidden">Masquée des suggestions</string>
+    <string name="preferences_category_colors_unused">Non utilisée</string>
+    <string name="preferences_category_colors_deleted">Catégorie « %s » supprimée</string>
+    <string name="category_color_dialog_delete">Supprimer la catégorie</string>
+    <string name="category_delete_confirm_title">Supprimer « %s » ?</string>
+    <string name="category_delete_confirm_message">Aucun évènement n’utilise cette catégorie. Sa couleur et ses réglages seront supprimés.</string>
+    <string name="category_color_dialog_suggested">Proposer dans les suggestions de l’éditeur</string>
 </resources>

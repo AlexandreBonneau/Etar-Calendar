@@ -41,6 +41,7 @@ object CategoryColors {
     const val KEY_NO_CATEGORY_COLOR = "pref_category_colors_no_category_color"
     /** Use the color of the first category in the header of the event details */
     const val KEY_DETAILS_HEADER = "pref_category_colors_details_header"
+    private const val KEY_HIDDEN_SUGGESTIONS = "pref_category_colors_hidden_suggestions"
     private const val KEY_COLOR_MAP = "pref_category_colors_map"
 
     /** Default "no category" color (light green #97eb79). */
@@ -107,10 +108,28 @@ object CategoryColors {
     @JvmStatic
     fun needsCategories(context: Context): Boolean = isEnabled(context)
 
+    // --- Categories hidden from the suggestions of the event editor ---------------------------
+
+    private fun hiddenSuggestions(context: Context): Set<String> =
+        prefs(context).getStringSet(KEY_HIDDEN_SUGGESTIONS, emptySet()) ?: emptySet()
+
+    @JvmStatic
+    fun isHiddenFromSuggestions(context: Context, category: String): Boolean =
+        normalize(category) in hiddenSuggestions(context)
+
+    @JvmStatic
+    fun setHiddenFromSuggestions(context: Context, category: String, hidden: Boolean) {
+        val set = hiddenSuggestions(context).toMutableSet()
+        if (hidden) set.add(normalize(category)) else set.remove(normalize(category))
+        prefs(context).edit().putStringSet(KEY_HIDDEN_SUGGESTIONS, set).apply()
+    }
+
     /** Categories offered in the event editor. */
     @JvmStatic
     fun getSuggestedCategories(context: Context): List<String> {
-        return getAllKnownCategories(context)
+        // Every known categories, except the ones hidden by the user
+        val hidden = hiddenSuggestions(context)
+        return getAllKnownCategories(context).filter { normalize(it) !in hidden }
     }
 
     @JvmStatic
@@ -197,6 +216,25 @@ object CategoryColors {
     @JvmStatic
     fun getBadgeColor(context: Context, category: String): Int =
         getCategoryColor(context, category) ?: getNoCategoryColor(context)
+
+    /** Whether the category belongs to the factory list (it can't be deleted) */
+    @JvmStatic
+    fun isFactoryCategory(category: String): Boolean = normalize(category) in defaultColorsByKey
+
+    /** A category can be deleted when no event uses it and it isn't a factory one */
+    @JvmStatic
+    fun isDeletable(category: String, usedCategoryKeys: Set<String>): Boolean =
+        !isFactoryCategory(category) && normalize(category) !in usedCategoryKeys
+
+    /**
+     * Deletes a category created or configured by the user : its color, its "hidden from
+     * suggestions" state. It disappears from the lists as long as no event uses it.
+     */
+    @JvmStatic
+    fun deleteCategory(context: Context, category: String) {
+        clearCategoryColor(context, category)
+        setHiddenFromSuggestions(context, category, false)
+    }
 
     /**
      * Every category to show in the settings: the factory ones, the configured ones and the ones

@@ -190,4 +190,9 @@ object EventCategories {
         val collator = Collator.getInstance().apply { strength = Collator.PRIMARY }
         return unique.values.sortedWith(collator)
     }
+
+    /** Categories used by at least one event, normalized (with a lower case) */
+    @JvmStatic
+    fun getUsedCategoryKeys(context: Context): Set<String> =
+        getEventCategories(context).values.flatten().map { normalize(it) }.toSet()
 }

@@ -20,6 +20,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.View
 import android.view.LayoutInflater
 import android.widget.EditText
 import android.widget.TextView
@@ -28,6 +29,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.fragment.app.DialogFragment
 import com.android.calendar.colorpicker.ColorPickerPalette
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.materialswitch.MaterialSwitch
 import ws.xsoh.etar.R
 import java.util.Locale
 
@@ -48,6 +50,7 @@ class CategoryColorDialog : DialogFragment() {
     private lateinit var hexInput: EditText
     private lateinit var preview: TextView
     private lateinit var spectrum: HsvColorPickerView
+    private lateinit var suggestedSwitch: MaterialSwitch
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val args = requireArguments()
@@ -63,6 +66,18 @@ class CategoryColorDialog : DialogFragment() {
             resources.getDimensionPixelSize(R.dimen.category_color_swatch_margin),
             PALETTE_COLUMNS) { color ->
             selectColor(color, updateHex = true, updateSpectrum = true)
+        }
+        // "Delete" is only offered for a category that no event uses (see CategoryColors)
+        view.findViewById<View>(R.id.category_delete).apply {
+            visibility = if (category != null && args.getBoolean(ARG_DELETABLE)) View.VISIBLE
+            else View.GONE
+            setOnClickListener { confirmDelete(category ?: return@setOnClickListener) }
+        }
+        suggestedSwitch = view.findViewById(R.id.category_suggested)
+        // The switch only makes sense for a real category (not the "no category" color)
+        suggestedSwitch.visibility = if (category != null) View.VISIBLE else View.GONE
+        if (savedInstanceState == null) {
+            suggestedSwitch.isChecked = args.getBoolean(ARG_SUGGESTED, true)
         }
         spectrum = view.findViewById(R.id.hsv_color_picker)
         spectrum.onColorChangedListener = HsvColorPickerView.OnColorChangedListener { color ->
@@ -90,6 +105,7 @@ class CategoryColorDialog : DialogFragment() {
                     putString(RESULT_CATEGORY, category)
                     putInt(RESULT_COLOR, selectedColor)
                     putBoolean(RESULT_COLOR_CHANGED, selectedColor != args.getInt(ARG_COLOR))
+                    putBoolean(RESULT_SUGGESTED, suggestedSwitch.isChecked)
                     putBoolean(RESULT_RESET, false)
                 })
             }
@@ -99,6 +115,7 @@ class CategoryColorDialog : DialogFragment() {
         builder.setNeutralButton(R.string.category_color_dialog_reset) { _, _ ->
             parentFragmentManager.setFragmentResult(REQUEST_KEY, Bundle().apply {
                 putString(RESULT_CATEGORY, category)
+                putBoolean(RESULT_SUGGESTED, suggestedSwitch.isChecked)
                 putBoolean(RESULT_RESET, true)
             })
         }
@@ -108,6 +125,21 @@ class CategoryColorDialog : DialogFragment() {
             dialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.isEnabled = canReset
         }
         return dialog
+    }
+
+    private fun confirmDelete(category: String) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(getString(R.string.category_delete_confirm_title, category))
+            .setMessage(R.string.category_delete_confirm_message)
+            .setPositiveButton(R.string.category_color_dialog_delete) { _, _ ->
+                parentFragmentManager.setFragmentResult(REQUEST_KEY, Bundle().apply {
+                    putString(RESULT_CATEGORY, category)
+                    putBoolean(RESULT_DELETE, true)
+                })
+                dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -146,10 +178,16 @@ class CategoryColorDialog : DialogFragment() {
         const val RESULT_RESET = "reset"
         /** True when the color differs from the one the dialog was opened with. */
         const val RESULT_COLOR_CHANGED = "color_changed"
+        /** Whether the category is offered in the suggestions of the event editor. */
+        const val RESULT_SUGGESTED = "suggested"
+        /** True when the user asked to delete the (unused) category. */
+        const val RESULT_DELETE = "delete"
 
         private const val ARG_CATEGORY = "category"
         private const val ARG_COLOR = "color"
         private const val ARG_ALLOW_RESET = "allow_reset"
+        private const val ARG_SUGGESTED = "suggested"
+        private const val ARG_DELETABLE = "deletable"
         private const val STATE_COLOR = "selected_color"
         private const val PALETTE_COLUMNS = 7
 
@@ -164,12 +202,15 @@ class CategoryColorDialog : DialogFragment() {
 
         @JvmStatic
         @JvmOverloads
-        fun newInstance(category: String?, color: Int, allowReset: Boolean) =
+        fun newInstance(category: String?, color: Int, allowReset: Boolean,
+                        suggested: Boolean = true, deletable: Boolean = false) =
             CategoryColorDialog().apply {
                 arguments = Bundle().apply {
                     putString(ARG_CATEGORY, category)
                     putInt(ARG_COLOR, color)
                     putBoolean(ARG_ALLOW_RESET, allowReset)
+                    putBoolean(ARG_SUGGESTED, suggested)
+                    putBoolean(ARG_DELETABLE, deletable)
                 }
             }
 
