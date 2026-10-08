@@ -71,6 +71,8 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputLayout;
 
 import com.android.calendar.categories.CategoryChips;
+import com.android.calendar.categories.CategoryColors;
+import com.android.calendar.categories.CategoryDropdownAdapter;
 import com.android.calendar.categories.EventCategories;
 import com.android.calendar.CalendarEventModel;
 import com.android.calendar.CalendarEventModel.Attendee;
@@ -1321,13 +1323,12 @@ public class EditEventView implements View.OnClickListener, DialogInterface.OnCa
     private void loadCategorySuggestions() {
         final Context appContext = mActivity.getApplicationContext();
         new Thread(() -> {
-            final List<String> known = EventCategories.getUsedCategories(appContext);
+            final List<String> known = CategoryColors.getSuggestedCategories(appContext);
             mActivity.runOnUiThread(() -> {
                 if (mActivity.isFinishing() || mActivity.isDestroyed()) {
                     return;
                 }
-                mCategoryInput.setAdapter(new ArrayAdapter<>(mActivity,
-                        android.R.layout.simple_dropdown_item_1line, known));
+                mCategoryInput.setAdapter(new CategoryDropdownAdapter(mActivity, known));
             });
         }).start();
     }

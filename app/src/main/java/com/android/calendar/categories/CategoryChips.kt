@@ -15,12 +15,15 @@
 
 package com.android.calendar.categories
 
+import android.content.res.ColorStateList
+import com.android.calendar.settings.CategoryColorDialog
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 
 /**
- * Fills a [ChipGroup] with one badge per category. Badges can optionally be removed (close
- * icon) or moved to the first position (long press), the first category being the main one.
+ * Fills a [ChipGroup] with one badge per category, colored with the category color and a
+ * WCAG-contrasted text. Badges can optionally be removed (close icon) or moved to the first
+ * position (long press), the first category being the one that gives its color to the event.
  */
 object CategoryChips {
 
@@ -34,12 +37,18 @@ object CategoryChips {
         group.removeAllViews()
         val context = group.context
         for (category in categories) {
+            val color = CategoryColors.getBadgeColor(context, category)
+            val textColor = CategoryColorDialog.contrastedTextColor(color)
             val chip = Chip(context).apply {
                 text = category
                 isCheckable = false
                 isClickable = listener != null
+                chipBackgroundColor = ColorStateList.valueOf(color)
+                setTextColor(textColor)
+                chipStrokeWidth = 0f
                 if (listener != null) {
                     isCloseIconVisible = true
+                    closeIconTint = ColorStateList.valueOf(textColor)
                     setOnCloseIconClickListener { listener.onRemove(category) }
                     setOnLongClickListener {
                         listener.onMoveFirst(category)
