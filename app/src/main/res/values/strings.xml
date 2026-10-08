@@ -871,4 +871,18 @@
     <string name="event_categories_label">Categories</string>
     <string name="event_categories_hint">Add a category</string>
     <string name="event_categories_add">Add this category</string>
+    <!-- Category colors -->
+    <string name="preferences_category_colors_title">Category colors</string>
+    <string name="preferences_category_colors_summary">Color events according to their categories</string>
+    <string name="preferences_category_colors_enable">Color events by category</string>
+    <string name="preferences_category_colors_enable_summary">Events use the color of their first category. Categories are only available for calendars whose sync app keeps them (ie. DAVx⁵).</string>
+    <string name="preferences_category_colors_no_category">Color of events without category</string>
+    <string name="preferences_category_colors_no_category_summary">Also used for categories without a configured color</string>
+    <string name="preferences_category_colors_list">Categories</string>
+    <string name="preferences_category_colors_loading">Loading…</string>
+    <string name="preferences_category_colors_empty">No category found in your calendars</string>
+    <string name="preferences_category_colors_not_set">Not set: default color</string>
+    <string name="category_color_dialog_preview">Sample event</string>
+    <string name="category_color_dialog_hex_hint">Hexadecimal color (#RRGGBB)</string>
+    <string name="category_color_dialog_reset">Default</string>
 </resources>

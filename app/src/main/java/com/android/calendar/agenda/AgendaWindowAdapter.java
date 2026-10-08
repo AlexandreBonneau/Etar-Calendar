@@ -16,6 +16,8 @@
 
 package com.android.calendar.agenda;
 
+import android.os.Message;
+import android.os.Looper;
 import android.app.Activity;
 import android.content.AsyncQueryHandler;
 import android.content.ContentResolver;
@@ -40,6 +42,8 @@ import android.widget.BaseAdapter;
 import android.widget.GridLayout;
 import android.widget.TextView;
 
+import com.android.calendar.categories.CategoryColors;
+import com.android.calendar.categories.EventCategories;
 import com.android.calendar.CalendarController;
 import com.android.calendar.CalendarController.EventType;
 import com.android.calendar.CalendarController.ViewType;
@@ -1064,6 +1068,41 @@ public class AgendaWindowAdapter extends BaseAdapter
     }
 
     private class QueryHandler extends AsyncQueryHandler {
+
+        @Override
+        protected Handler createHandler(Looper looper) {
+            return new CategoryWorkerHandler(looper);
+        }
+
+        /**
+         * Runs on the query worker thread, just before each query : reads the categories so
+         * that everything depending on them is consistent with the events being loaded,
+         * without querying on the UI thread.
+         */
+        private class CategoryWorkerHandler extends WorkerHandler {
+            CategoryWorkerHandler(Looper looper) {
+                super(looper);
+            }
+
+            @Override
+            public void handleMessage(Message msg) {
+                if (msg.obj instanceof WorkerArgs && ((WorkerArgs) msg.obj).cookie instanceof QuerySpec) {
+                    try {
+                        prepareCategoryQuery((WorkerArgs) msg.obj, (QuerySpec) ((WorkerArgs) msg.obj).cookie);
+                    } catch (RuntimeException e) {
+                        Log.w(TAG, "Cannot apply the categories to the query", e);
+                    }
+                }
+                super.handleMessage(msg);
+            }
+        }
+
+        private void prepareCategoryQuery(WorkerArgs args, QuerySpec spec) {
+            if (!CategoryColors.needsCategories(mContext)) {
+                return;
+            }
+            EventCategories.refresh(mContext);
+        }
 
         public QueryHandler(ContentResolver cr) {
             super(cr);

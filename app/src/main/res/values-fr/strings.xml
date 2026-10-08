@@ -391,4 +391,18 @@
     <string name="event_categories_label">Catégories</string>
     <string name="event_categories_hint">Ajouter une catégorie</string>
     <string name="event_categories_add">Ajouter cette catégorie</string>
+    <!-- Category colors -->
+    <string name="preferences_category_colors_title">Couleurs des catégories</string>
+    <string name="preferences_category_colors_summary">Colorer les évènements selon leurs catégories</string>
+    <string name="preferences_category_colors_enable">Colorer les évènements par catégorie</string>
+    <string name="preferences_category_colors_enable_summary">Les évènements prennent la couleur de leur première catégorie. Les catégories ne sont disponibles que pour les agendas dont l’application de synchronisation les conserve (par ex. DAVx⁵).</string>
+    <string name="preferences_category_colors_no_category">Couleur des évènements sans catégorie</string>
+    <string name="preferences_category_colors_no_category_summary">Utilisée aussi pour les catégories sans couleur configurée</string>
+    <string name="preferences_category_colors_list">Catégories</string>
+    <string name="preferences_category_colors_loading">Chargement…</string>
+    <string name="preferences_category_colors_empty">Aucune catégorie trouvée dans vos agendas</string>
+    <string name="preferences_category_colors_not_set">Non configurée : couleur par défaut</string>
+    <string name="category_color_dialog_preview">Exemple d’évènement</string>
+    <string name="category_color_dialog_hex_hint">Couleur hexadécimale (#RRGGBB)</string>
+    <string name="category_color_dialog_reset">Par défaut</string>
 </resources>
