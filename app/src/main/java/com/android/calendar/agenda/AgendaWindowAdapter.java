@@ -44,6 +44,7 @@ import android.widget.TextView;
 
 import com.android.calendar.categories.CategoryColors;
 import com.android.calendar.categories.EventCategories;
+import com.android.calendar.categories.CategoryFilter;
 import com.android.calendar.CalendarController;
 import com.android.calendar.CalendarController.EventType;
 import com.android.calendar.CalendarController.ViewType;
@@ -1102,6 +1103,11 @@ public class AgendaWindowAdapter extends BaseAdapter
                 return;
             }
             EventCategories.refresh(mContext);
+
+            String filter = CategoryFilter.buildSelection(mContext, Instances.EVENT_ID);
+            if (filter != null) {
+                args.selection = "(" + args.selection + ") AND " + filter;
+            }
         }
 
         public QueryHandler(ContentResolver cr) {

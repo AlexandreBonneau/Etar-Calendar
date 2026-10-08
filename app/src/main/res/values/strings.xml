@@ -900,4 +900,11 @@
     <string name="category_delete_confirm_title">Delete \"%s\"?</string>
     <string name="category_delete_confirm_message">No event uses this category. Its color and settings will be removed.</string>
     <string name="category_color_dialog_suggested">Offer in the event editor suggestions</string>
+    <!-- Category filter -->
+    <string name="category_filter_menu">Filter</string>
+    <string name="category_filter_menu_active">Filter (active)</string>
+    <string name="category_filter_title">Categories to show</string>
+    <string name="category_filter_all">All</string>
+    <string name="category_filter_none">None</string>
+    <string name="category_filter_uncategorized">Without category</string>
 </resources>

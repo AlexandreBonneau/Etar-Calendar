@@ -49,6 +49,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.android.calendar.categories.CategoryColors;
 import com.android.calendar.categories.EventCategories;
+import com.android.calendar.categories.CategoryFilter;
 
 import ws.xsoh.etar.R;
 
@@ -331,10 +332,14 @@ public class Event implements Cloneable {
         mNoColorColor = res.getColor(R.color.event_center);
         // Sort events in two passes so we ensure the allday and standard events
         // get sorted in the correct order
+        boolean filterActive = CategoryFilter.isActive(context);
         cEvents.moveToPosition(-1);
         while (cEvents.moveToNext()) {
             Event e = generateEventFromCursor(cEvents, context);
             if (e.startDay > endDay || e.endDay < startDay) {
+                continue;
+            }
+            if (filterActive && !CategoryFilter.isEventVisible(context, e.id)) {
                 continue;
             }
             events.add(e);

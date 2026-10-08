@@ -420,4 +420,11 @@
     <string name="category_delete_confirm_title">Supprimer « %s » ?</string>
     <string name="category_delete_confirm_message">Aucun évènement n’utilise cette catégorie. Sa couleur et ses réglages seront supprimés.</string>
     <string name="category_color_dialog_suggested">Proposer dans les suggestions de l’éditeur</string>
+    <!-- Category filter -->
+    <string name="category_filter_menu">Filtrer</string>
+    <string name="category_filter_menu_active">Filtrer (actif)</string>
+    <string name="category_filter_title">Catégories à afficher</string>
+    <string name="category_filter_all">Toutes</string>
+    <string name="category_filter_none">Aucune</string>
+    <string name="category_filter_uncategorized">Sans catégorie</string>
 </resources>

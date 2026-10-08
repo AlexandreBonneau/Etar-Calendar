@@ -106,7 +106,7 @@ object CategoryColors {
 
     /** Whether the loaders must read the categories (colors or filter in use). */
     @JvmStatic
-    fun needsCategories(context: Context): Boolean = isEnabled(context)
+    fun needsCategories(context: Context): Boolean = isEnabled(context) || CategoryFilter.isActive(context)
 
     // --- Categories hidden from the suggestions of the event editor ---------------------------
 
@@ -228,12 +228,14 @@ object CategoryColors {
 
     /**
      * Deletes a category created or configured by the user : its color, its "hidden from
-     * suggestions" state. It disappears from the lists as long as no event uses it.
+     * suggestions" state and its entry in the category filter. It disappears from the lists
+     * as long as no event uses it.
      */
     @JvmStatic
     fun deleteCategory(context: Context, category: String) {
         clearCategoryColor(context, category)
         setHiddenFromSuggestions(context, category, false)
+        CategoryFilter.forget(context, category)
     }
 
     /**
