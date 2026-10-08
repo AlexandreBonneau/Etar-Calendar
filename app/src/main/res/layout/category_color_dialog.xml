@@ -29,6 +29,12 @@
             android:layout_marginTop="16dp"
             android:gravity="center" />
 
+        <com.android.calendar.settings.HsvColorPickerView
+            android:id="@+id/hsv_color_picker"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" />
+
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

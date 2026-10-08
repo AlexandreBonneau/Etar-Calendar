@@ -47,6 +47,7 @@ class CategoryColorDialog : DialogFragment() {
     private lateinit var palette: ColorPickerPalette
     private lateinit var hexInput: EditText
     private lateinit var preview: TextView
+    private lateinit var spectrum: HsvColorPickerView
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val args = requireArguments()
@@ -57,11 +58,15 @@ class CategoryColorDialog : DialogFragment() {
         preview = view.findViewById(R.id.category_color_preview)
         hexInput = view.findViewById(R.id.category_color_hex)
         palette = view.findViewById(R.id.color_picker)
-        // Compact swatches, to keep the dialog short vertically.
+        // Compact swatches to keep the dialog short vertically, since it now also holds the spectrum
         palette.init(resources.getDimensionPixelSize(R.dimen.category_color_swatch),
             resources.getDimensionPixelSize(R.dimen.category_color_swatch_margin),
             PALETTE_COLUMNS) { color ->
-            selectColor(color, updateHex = true)
+            selectColor(color, updateHex = true, updateSpectrum = true)
+        }
+        spectrum = view.findViewById(R.id.hsv_color_picker)
+        spectrum.onColorChangedListener = HsvColorPickerView.OnColorChangedListener { color ->
+            selectColor(color, updateHex = true, updateSpectrum = false)
         }
 
         hexInput.addTextChangedListener(object : TextWatcher {
@@ -70,12 +75,12 @@ class CategoryColorDialog : DialogFragment() {
             override fun afterTextChanged(s: Editable?) {
                 if (updatingHex) return
                 parseHexColor(s?.toString())?.let {
-                    selectColor(it, updateHex = false)
+                    selectColor(it, updateHex = false, updateSpectrum = true)
                 }
             }
         })
 
-        selectColor(selectedColor, updateHex = true)
+        selectColor(selectedColor, updateHex = true, updateSpectrum = true)
 
         val builder = MaterialAlertDialogBuilder(requireContext())
             .setTitle(category ?: getString(R.string.preferences_category_colors_no_category))
@@ -110,13 +115,17 @@ class CategoryColorDialog : DialogFragment() {
         outState.putInt(STATE_COLOR, selectedColor)
     }
 
-    private fun selectColor(color: Int, updateHex: Boolean) {
+    private fun selectColor(color: Int, updateHex: Boolean, updateSpectrum: Boolean) {
         selectedColor = ColorUtils.setAlphaComponent(color, 0xFF)
         // Rebuilding the palette is costly: only do it when its highlighted swatch changes
+        // NB: the spectrum calls this for every move of the finger
         val newSelection = selectedColor.takeIf { it in PALETTE }
         if (newSelection != paletteSelection || palette.childCount == 0) {
             paletteSelection = newSelection
             palette.drawPalette(PALETTE, selectedColor)
+        }
+        if (updateSpectrum) {
+            spectrum.setColor(selectedColor)
         }
         preview.setBackgroundColor(selectedColor)
         preview.setTextColor(contrastedTextColor(selectedColor))
