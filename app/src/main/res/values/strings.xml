@@ -885,4 +885,7 @@
     <string name="category_color_dialog_preview">Sample event</string>
     <string name="category_color_dialog_hex_hint">Hexadecimal color (#RRGGBB)</string>
     <string name="category_color_dialog_reset">Default</string>
+    <!-- Category color in event details -->
+    <string name="preferences_category_colors_details_header">Category color in event details</string>
+    <string name="preferences_category_colors_details_header_summary">Use the color of the first category instead of the calendar color in the header of an event</string>
 </resources>

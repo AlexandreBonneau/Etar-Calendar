@@ -405,4 +405,7 @@
     <string name="category_color_dialog_preview">Exemple d’évènement</string>
     <string name="category_color_dialog_hex_hint">Couleur hexadécimale (#RRGGBB)</string>
     <string name="category_color_dialog_reset">Par défaut</string>
+    <!-- Category color in event details -->
+    <string name="preferences_category_colors_details_header">Couleur de catégorie dans le détail</string>
+    <string name="preferences_category_colors_details_header_summary">Utiliser la couleur de la première catégorie au lieu de celle de l’agenda dans l’en-tête d’un évènement</string>
 </resources>

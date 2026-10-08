@@ -55,6 +55,13 @@ class CategoryColorsPreferences : PreferenceFragmentCompat() {
             }
         }
 
+        val detailsHeaderPref = SwitchPreference(context).apply {
+            key = CategoryColors.KEY_DETAILS_HEADER
+            setTitle(R.string.preferences_category_colors_details_header)
+            setSummary(R.string.preferences_category_colors_details_header_summary)
+            setDefaultValue(false)
+        }
+
         noCategoryPref = ColorSwatchPreference(context).apply {
             key = "pref_category_colors_no_category_item"
             setTitle(R.string.preferences_category_colors_no_category)
@@ -73,10 +80,12 @@ class CategoryColorsPreferences : PreferenceFragmentCompat() {
         }
 
         screen.addPreference(enabledPref)
+        screen.addPreference(detailsHeaderPref)
         screen.addPreference(noCategoryPref)
         screen.addPreference(categoriesGroup)
         preferenceScreen = screen
         // Dependencies are resolved through the PreferenceManager : the screen must be set first.
+        detailsHeaderPref.dependency = CategoryColors.KEY_ENABLED
         noCategoryPref.dependency = CategoryColors.KEY_ENABLED
         categoriesGroup.dependency = CategoryColors.KEY_ENABLED
 

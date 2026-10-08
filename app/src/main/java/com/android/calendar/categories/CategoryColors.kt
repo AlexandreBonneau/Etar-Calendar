@@ -39,6 +39,8 @@ object CategoryColors {
 
     const val KEY_ENABLED = "pref_category_colors_enabled"
     const val KEY_NO_CATEGORY_COLOR = "pref_category_colors_no_category_color"
+    /** Use the color of the first category in the header of the event details */
+    const val KEY_DETAILS_HEADER = "pref_category_colors_details_header"
     private const val KEY_COLOR_MAP = "pref_category_colors_map"
 
     /** Default "no category" color (light green #97eb79). */
@@ -57,6 +59,11 @@ object CategoryColors {
 
     @JvmStatic
     fun isEnabled(context: Context): Boolean = prefs(context).getBoolean(KEY_ENABLED, false)
+
+    /** Whether the event details header uses the color of the first category */
+    @JvmStatic
+    fun isDetailsHeaderEnabled(context: Context): Boolean =
+        isEnabled(context) && prefs(context).getBoolean(KEY_DETAILS_HEADER, false)
 
     /** Whether the loaders must read the categories (colors or filter in use). */
     @JvmStatic
